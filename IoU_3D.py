@@ -8,6 +8,9 @@ def box3d_vol(corners):
     c = np.sqrt(np.sum((corners[0,:] - corners[4,:])**2))
     return a*b*c
 
+def poly_area(x, y):
+    return 0.5*np.abs(np.dot(x,np.roll(y,1))-np.dot(y,np.roll(x,1)))
+
 def Cal_area_2poly(data1,data2):
 
     poly1 = Polygon(data1).convex_hull
@@ -33,15 +36,18 @@ def _box3d_iou(corners1, corners2):
     rect1 = [(corners1[i,0], corners1[i,1]) for i in [4,6,2,0]]
     rect2 = [(corners2[i,0], corners2[i,1]) for i in [4,6,2,0]] 
     
+    area1 = poly_area(np.array(rect1)[:,0], np.array(rect1)[:,1])
+    area2 = poly_area(np.array(rect2)[:,0], np.array(rect2)[:,1])
     inter_area = Cal_area_2poly(rect1, rect2)
-
+    iou_2d = inter_area / (area1 + area2 - inter_area)
+    
     ymax = min(corners1[1,2], corners2[1,2])
     ymin = max(corners1[0,2], corners2[0,2])
 
     inter_vol = inter_area * max(0.0, ymax-ymin)
     
-    vol1 = box3d_vol(corners1)
-    vol2 = box3d_vol(corners2)
+    vol1 = area1 * (corners1[1,2] - corners1[0,2])
+    vol2 = area2 * (corners2[1,2] - corners2[0,2])
     iou_3d = inter_vol / (vol1 + vol2 - inter_vol)
     return iou_3d
 
